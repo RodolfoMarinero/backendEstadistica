@@ -4,12 +4,24 @@ import com.example.backend.services.EstadisticaService;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
 public class EstadisticaServiceImpl implements EstadisticaService {
+
+    @Override
+    public Map<String, Object> calcularEstadisticas(List<Double> data) {
+        Map<String, Object> resultados = new HashMap<>();
+        resultados.put("media", calcularMedia(data));
+        resultados.put("mediana", calcularMediana(data));
+        resultados.put("moda", calcularModa(data));
+        resultados.put("desviacionEstandar", calcularDesviacionEstandar(data));
+        resultados.put("varianza", calcularVarianza(data));
+        return resultados;
+    }
     @Override
     public double calcularMedia(List<Double> data) {
         return data.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);
