@@ -2,6 +2,7 @@ package com.example.backend.controllers;
 
 import com.example.backend.model.RequestData;
 import com.example.backend.services.EstadisticaService;
+import com.example.backend.utils.CsvReader;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -66,12 +67,7 @@ public class EstadisticaController {
             BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
 
             // Saltar la primera línea (encabezados) y leer los datos
-            List<Double> data = reader.lines()
-                    .skip(1) // Ignorar encabezados
-                    .flatMap(line -> List.of(line.split(",")).stream()) // Separar por comas
-                    .map(String::trim) // Eliminar espacios
-                    .map(Double::parseDouble) // Convertir a Double
-                    .collect(Collectors.toList());
+            List<Double> data = CsvReader.leerCSV(file);
 
             // Calcular estadísticas
             Map<String, Object> resultados = service.calcularEstadisticas(data);
@@ -80,6 +76,28 @@ public class EstadisticaController {
         } catch (Exception e) {
             return ResponseEntity.badRequest().body(Map.of(
                     "error", "Error al procesar el archivo: " + e.getMessage()
+            ));
+        }
+    }
+
+    @PostMapping("/procesar-csv-doble")
+    public ResponseEntity<?> procesarCSVDoble(@RequestParam("file1") MultipartFile file1,
+                                              @RequestParam("file2") MultipartFile file2) {
+        try {
+            List<Double> data1 = CsvReader.leerCSV(file1);
+            List<Double> data2 = CsvReader.leerCSV(file2);
+
+            // Calcular estadísticas
+            Map<String, Object> resultados = Map.of(
+                    "covarianza", service.calcularCovarianza(data1, data2),
+                    "correlacion", service.calcularCorrelacion(data1, data2),
+                    "coeficienteCorrelacion", service.calcularCoeficienteCorrelacion(data1, data2)
+            );
+
+            return ResponseEntity.ok(resultados);
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().body(Map.of(
+                    "error", "Error al procesar los archivos: " + e.getMessage()
             ));
         }
     }

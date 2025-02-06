@@ -13,4 +13,7 @@ public interface EstadisticaService {
     public double calcularDesviacionEstandar(List<Double> data);
     public long calcularPermutacion(int n, int r);
     public long calcularCombinatoria(int n, int r);
+    public double calcularCovarianza(List<Double> data1,List<Double> data2);
+    public double calcularCorrelacion(List<Double> data1,List<Double> data2);
+    public double calcularCoeficienteCorrelacion(List<Double> data1,List<Double> data2);
 }

@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @Service
 public class EstadisticaServiceImpl implements EstadisticaService {
@@ -85,5 +86,31 @@ public class EstadisticaServiceImpl implements EstadisticaService {
         long result = 1;
         for (int i = 2; i <= num; i++) result *= i;
         return result;
+    }
+
+    @Override
+    public double calcularCovarianza(List<Double> data1, List<Double> data2) {
+        if (data1.size() != data2.size() || data1.isEmpty()) {
+            throw new IllegalArgumentException("Las listas deben tener el mismo tamaño y no estar vacías");
+        }
+        double mediaX = calcularMedia(data1);
+        double mediaY = calcularMedia(data2);
+        return IntStream.range(0, data1.size())
+                .mapToDouble(i -> (data1.get(i) - mediaX) * (data2.get(i) - mediaY))
+                .average()
+                .orElse(0.0);
+    }
+
+    @Override
+    public double calcularCorrelacion(List<Double> data1, List<Double> data2) {
+        double covarianza = calcularCovarianza(data1, data2);
+        double desviacionX = calcularDesviacionEstandar(data1);
+        double desviacionY = calcularDesviacionEstandar(data2);
+        return (desviacionX == 0 || desviacionY == 0) ? 0 : covarianza / (desviacionX * desviacionY);
+    }
+
+    @Override
+    public double calcularCoeficienteCorrelacion(List<Double> data1, List<Double> data2) {
+        return calcularCorrelacion(data1, data2);
     }
 }
