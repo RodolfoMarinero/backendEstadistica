@@ -16,4 +16,5 @@ public interface EstadisticaService {
     public double calcularCovarianza(List<Double> data1,List<Double> data2);
     public double calcularCorrelacion(List<Double> data1,List<Double> data2);
     public double calcularCoeficienteCorrelacion(List<Double> data1,List<Double> data2);
+    Map<String, Object> calcularEstadisticasDoble(List<Double> data1, List<Double> data2);
 }

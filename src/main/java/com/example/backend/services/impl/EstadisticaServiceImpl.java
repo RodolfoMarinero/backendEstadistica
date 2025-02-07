@@ -23,6 +23,17 @@ public class EstadisticaServiceImpl implements EstadisticaService {
         resultados.put("varianza", calcularVarianza(data));
         return resultados;
     }
+
+    @Override
+    public Map<String, Object> calcularEstadisticasDoble(List<Double> data1, List<Double> data2) {
+        Map<String, Object> resultados = new HashMap<>();
+        resultados.put("covarianza", calcularCovarianza(data1, data2));
+        resultados.put("correlacion", calcularCorrelacion(data1, data2));
+        resultados.put("coeficienteCorrelacion", calcularCoeficienteCorrelacion(data1, data2));
+        return resultados;
+    }
+
+
     @Override
     public double calcularMedia(List<Double> data) {
         return data.stream().mapToDouble(Double::doubleValue).average().orElse(0.0);

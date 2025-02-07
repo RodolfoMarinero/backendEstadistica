@@ -1,5 +1,6 @@
 package com.example.backend.controllers;
 
+import com.example.backend.model.MuestraDTO;
 import com.example.backend.model.RequestData;
 import com.example.backend.services.EstadisticaService;
 import com.example.backend.utils.CsvReader;
@@ -61,44 +62,64 @@ public class EstadisticaController {
     }
 
     @PostMapping("/procesar-csv")
-    public ResponseEntity<?> procesarCSV(@RequestParam("file") MultipartFile file) {
+    public ResponseEntity<?> procesarCSV(@ModelAttribute MuestraDTO muestra) {
         try {
-            // Leer el archivo CSV
-            BufferedReader reader = new BufferedReader(new InputStreamReader(file.getInputStream()));
+            List<Double> data;
 
-            // Saltar la primera línea (encabezados) y leer los datos
-            List<Double> data = CsvReader.leerCSV(file);
+            // Si se recibe archivo, se procesa el CSV.
+            if (muestra.getFile() != null && !muestra.getFile().isEmpty()) {
+                data = CsvReader.leerCSV(muestra.getFile());
+            }
+            // Si no se recibe archivo, se utiliza la lista de datos proporcionada.
+            else if (muestra.getDatos() != null && !muestra.getDatos().isEmpty()) {
+                data = muestra.getDatos();
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "No se recibieron datos ni archivo CSV"));
+            }
 
-            // Calcular estadísticas
+            // Calcular estadísticas usando el servicio correspondiente.
             Map<String, Object> resultados = service.calcularEstadisticas(data);
-
             return ResponseEntity.ok(resultados);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Error al procesar el archivo: " + e.getMessage()
-            ));
+            return ResponseEntity.badRequest().body(Map.of("error", "Error al procesar: " + e.getMessage()));
         }
     }
+
 
     @PostMapping("/procesar-csv-doble")
-    public ResponseEntity<?> procesarCSVDoble(@RequestParam("file1") MultipartFile file1,
-                                              @RequestParam("file2") MultipartFile file2) {
+    public ResponseEntity<?> procesarCSVDoble(
+            @ModelAttribute("muestra1") MuestraDTO muestra1,
+            @ModelAttribute("muestra2") MuestraDTO muestra2) {
         try {
-            List<Double> data1 = CsvReader.leerCSV(file1);
-            List<Double> data2 = CsvReader.leerCSV(file2);
+            List<Double> data1;
+            List<Double> data2;
 
-            // Calcular estadísticas
-            Map<String, Object> resultados = Map.of(
-                    "covarianza", service.calcularCovarianza(data1, data2),
-                    "correlacion", service.calcularCorrelacion(data1, data2),
-                    "coeficienteCorrelacion", service.calcularCoeficienteCorrelacion(data1, data2)
-            );
+            // Procesar el primer conjunto de datos
+            if (muestra1.getFile() != null && !muestra1.getFile().isEmpty()) {
+                data1 = CsvReader.leerCSV(muestra1.getFile());
+            } else if (muestra1.getDatos() != null && !muestra1.getDatos().isEmpty()) {
+                data1 = muestra1.getDatos();
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "No se recibieron datos en la primera muestra"));
+            }
+
+            // Procesar el segundo conjunto de datos
+            if (muestra2.getFile() != null && !muestra2.getFile().isEmpty()) {
+                data2 = CsvReader.leerCSV(muestra2.getFile());
+            } else if (muestra2.getDatos() != null && !muestra2.getDatos().isEmpty()) {
+                data2 = muestra2.getDatos();
+            } else {
+                return ResponseEntity.badRequest().body(Map.of("error", "No se recibieron datos en la segunda muestra"));
+            }
+
+            // Llamar al método del service que calcula las estadísticas para dos conjuntos de datos.
+            Map<String, Object> resultados = service.calcularEstadisticasDoble(data1, data2);
 
             return ResponseEntity.ok(resultados);
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(
-                    "error", "Error al procesar los archivos: " + e.getMessage()
-            ));
+            return ResponseEntity.badRequest().body(Map.of("error", "Error al procesar: " + e.getMessage()));
         }
     }
+
+
 }
