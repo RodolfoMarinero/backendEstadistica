@@ -1,15 +1,14 @@
 package com.example.backend.controllers;
 
-import com.example.backend.model.EstadisticasDTO;
-import com.example.backend.model.EstadisticasDobleDTO;
-import com.example.backend.model.MuestraDTO;
-import com.example.backend.model.RequestData;
+import com.example.backend.model.*;
 import com.example.backend.services.EstadisticaService;
 import com.example.backend.utils.CsvReader;
+import com.example.backend.utils.MultipartFileEditor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.web.bind.WebDataBinder;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -26,6 +25,12 @@ public class EstadisticaController {
     @Autowired
     private EstadisticaService service;
 
+
+    @InitBinder
+    public void initBinder(WebDataBinder binder) {
+        // Registrar el editor personalizado para MultipartFile
+        binder.registerCustomEditor(MultipartFile.class, new MultipartFileEditor());
+    }
 
     @GetMapping("/permutacion")
     public ResponseEntity<Long> getPermutacion(@RequestParam int n, @RequestParam int r) {
@@ -50,11 +55,9 @@ public class EstadisticaController {
     }
 
     @PostMapping("/procesar-csv-doble")
-    public ResponseEntity<?> procesarCSVDoble(
-            @ModelAttribute("muestra1") MuestraDTO muestra1,
-            @ModelAttribute("muestra2") MuestraDTO muestra2) {
+    public ResponseEntity<?> procesarCSVDoble(@ModelAttribute MuestraDobleDTO muestraDoble) {
         try {
-            EstadisticasDobleDTO dto = service.calcularEstadisticasDoble(muestra1, muestra2);
+            EstadisticasDobleDTO dto = service.calcularEstadisticasDoble(muestraDoble);
             return ResponseEntity.ok(dto);
         } catch (Exception e) {
             return ResponseEntity
@@ -62,6 +65,7 @@ public class EstadisticaController {
                     .body(Map.of("error", "Error al procesar: " + e.getMessage()));
         }
     }
+
 
 
 }

@@ -3,9 +3,11 @@ package com.example.backend.services.impl;
 import com.example.backend.model.EstadisticasDTO;
 import com.example.backend.model.EstadisticasDobleDTO;
 import com.example.backend.model.MuestraDTO;
+import com.example.backend.model.MuestraDobleDTO;
 import com.example.backend.services.EstadisticaService;
 import com.example.backend.utils.CsvReader;
 import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -17,7 +19,7 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
     @Override
     public EstadisticasDTO calcularEstadisticas(MuestraDTO muestra) {
-        List<Double> data = obtenerDatos(muestra);
+        List<Double> data = obtenerDatos(muestra.getDatos(), muestra.getFile());
         EstadisticasDTO dto = new EstadisticasDTO();
         dto.setMedia(calcularMedia(data));
         dto.setMediana(calcularMediana(data));
@@ -28,9 +30,10 @@ public class EstadisticaServiceImpl implements EstadisticaService {
     }
 
     @Override
-    public EstadisticasDobleDTO calcularEstadisticasDoble(MuestraDTO muestra1, MuestraDTO muestra2) {
-        List<Double> data1 = obtenerDatos(muestra1);
-        List<Double> data2 = obtenerDatos(muestra2);
+    public EstadisticasDobleDTO calcularEstadisticasDoble(MuestraDobleDTO muestraDoble) {
+        List<Double> data1 = obtenerDatos(muestraDoble.getDatos1(), muestraDoble.getFile1());
+        List<Double> data2 = obtenerDatos(muestraDoble.getDatos2(), muestraDoble.getFile2());
+
         EstadisticasDobleDTO dto = new EstadisticasDobleDTO();
         dto.setCovarianza(calcularCovarianza(data1, data2));
         dto.setCorrelacion(calcularCorrelacion(data1, data2));
@@ -40,18 +43,19 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
 
 
-    private List<Double> obtenerDatos(MuestraDTO muestra) {
-        if (muestra.getFile() != null && !muestra.getFile().isEmpty()) {
+    private List<Double> obtenerDatos(String datos, MultipartFile file) {
+        if (file != null && !file.isEmpty()) {
             try {
-                return CsvReader.leerCSV(muestra.getFile());
+                return CsvReader.leerCSV(file);
             } catch (Exception e) {
                 throw new RuntimeException("Error al leer el archivo CSV", e);
             }
-        } else if (muestra.getDatos() != null && !muestra.getDatos().trim().isEmpty()) {
-            return parseDataString(muestra.getDatos());
+        } else if (datos != null && !datos.trim().isEmpty()) {
+            return parseDataString(datos);
         }
         throw new IllegalArgumentException("No se recibieron datos ni archivo CSV");
     }
+
 
     private List<Double> parseDataString(String dataString) {
         // Eliminar espacios en blanco y quitar corchetes inicial y final
@@ -98,15 +102,30 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
     @Override
     public List<Double> calcularModa(List<Double> data) {
+        // Crear el mapa de frecuencias de cada elemento
         Map<Double, Long> frequency = data.stream()
                 .collect(Collectors.groupingBy(e -> e, Collectors.counting()));
 
+        // Si no hay datos o el mapa está vacío, retornamos [-1]
+        if (frequency.isEmpty()) {
+            return List.of(-1.0);
+        }
+
+        // Si todos los elementos tienen la misma frecuencia, no hay una moda definida
+        if (frequency.values().stream().distinct().count() == 1) {
+            return List.of(-1.0);
+        }
+
+        // Si existen modas, buscamos el máximo de ocurrencias
         long maxCount = Collections.max(frequency.values());
+
+        // Retornamos aquellos elementos cuya frecuencia es igual al máximo
         return frequency.entrySet().stream()
                 .filter(entry -> entry.getValue() == maxCount)
                 .map(Map.Entry::getKey)
                 .collect(Collectors.toList());
     }
+
 
     @Override
     public double calcularDesviacionEstandar(List<Double> data) {
