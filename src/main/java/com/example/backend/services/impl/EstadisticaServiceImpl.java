@@ -152,6 +152,6 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
     @Override
     public double calcularCoeficienteCorrelacion(List<Double> data1, List<Double> data2) {
-        return calcularCorrelacion(data1, data2);
+        return calcularCorrelacion(data1, data2)/calcularCovarianza(data1, data2);
     }
 }
