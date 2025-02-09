@@ -1,6 +1,10 @@
 package com.example.backend.services.impl;
 
+import com.example.backend.model.EstadisticasDTO;
+import com.example.backend.model.EstadisticasDobleDTO;
+import com.example.backend.model.MuestraDTO;
 import com.example.backend.services.EstadisticaService;
+import com.example.backend.utils.CsvReader;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
@@ -13,25 +17,51 @@ import java.util.stream.IntStream;
 @Service
 public class EstadisticaServiceImpl implements EstadisticaService {
 
+
     @Override
-    public Map<String, Object> calcularEstadisticas(List<Double> data) {
-        Map<String, Object> resultados = new HashMap<>();
-        resultados.put("media", calcularMedia(data));
-        resultados.put("mediana", calcularMediana(data));
-        resultados.put("moda", calcularModa(data));
-        resultados.put("desviacionEstandar", calcularDesviacionEstandar(data));
-        resultados.put("varianza", calcularVarianza(data));
-        return resultados;
+    public EstadisticasDTO calcularEstadisticas(MuestraDTO muestra) {
+        List<Double> data = obtenerDatos(muestra);
+        EstadisticasDTO dto = new EstadisticasDTO();
+        dto.setMedia(calcularMedia(data));
+        dto.setMediana(calcularMediana(data));
+        dto.setModa(calcularModa(data));
+        dto.setDesviacionEstandar(calcularDesviacionEstandar(data));
+        dto.setVarianza(calcularVarianza(data));
+        return dto;
     }
 
     @Override
-    public Map<String, Object> calcularEstadisticasDoble(List<Double> data1, List<Double> data2) {
-        Map<String, Object> resultados = new HashMap<>();
-        resultados.put("covarianza", calcularCovarianza(data1, data2));
-        resultados.put("correlacion", calcularCorrelacion(data1, data2));
-        resultados.put("coeficienteCorrelacion", calcularCoeficienteCorrelacion(data1, data2));
-        return resultados;
+    public EstadisticasDobleDTO calcularEstadisticasDoble(MuestraDTO muestra1, MuestraDTO muestra2) {
+        List<Double> data1 = obtenerDatos(muestra1);
+        List<Double> data2 = obtenerDatos(muestra2);
+        EstadisticasDobleDTO dto = new EstadisticasDobleDTO();
+        dto.setCovarianza(calcularCovarianza(data1, data2));
+        dto.setCorrelacion(calcularCorrelacion(data1, data2));
+        dto.setCoeficienteCorrelacion(calcularCoeficienteCorrelacion(data1, data2));
+        return dto;
     }
+
+
+    /**
+     * Método auxiliar para obtener la lista de datos de la muestra.
+     * Se verifica si se envió un archivo; en caso contrario, se utiliza la lista.
+     */
+    private List<Double> obtenerDatos(MuestraDTO muestra) {
+        if (muestra.getFile() != null && !muestra.getFile().isEmpty()) {
+            try {
+                return CsvReader.leerCSV(muestra.getFile());
+            } catch (Exception e) {
+                // Puedes registrar el error y/o lanzar una RuntimeException
+                throw new RuntimeException("Error al leer el archivo CSV", e);
+            }
+        } else if (muestra.getDatos() != null && !muestra.getDatos().isEmpty()) {
+            return muestra.getDatos();
+        }
+        throw new IllegalArgumentException("No se recibieron datos ni archivo CSV");
+    }
+
+
+
 
 
     @Override
