@@ -7,10 +7,7 @@ import com.example.backend.services.EstadisticaService;
 import com.example.backend.utils.CsvReader;
 import org.springframework.stereotype.Service;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -42,22 +39,41 @@ public class EstadisticaServiceImpl implements EstadisticaService {
     }
 
 
-    /**
-     * Método auxiliar para obtener la lista de datos de la muestra.
-     * Se verifica si se envió un archivo; en caso contrario, se utiliza la lista.
-     */
+
     private List<Double> obtenerDatos(MuestraDTO muestra) {
         if (muestra.getFile() != null && !muestra.getFile().isEmpty()) {
             try {
                 return CsvReader.leerCSV(muestra.getFile());
             } catch (Exception e) {
-                // Puedes registrar el error y/o lanzar una RuntimeException
                 throw new RuntimeException("Error al leer el archivo CSV", e);
             }
-        } else if (muestra.getDatos() != null && !muestra.getDatos().isEmpty()) {
-            return muestra.getDatos();
+        } else if (muestra.getDatos() != null && !muestra.getDatos().trim().isEmpty()) {
+            return parseDataString(muestra.getDatos());
         }
         throw new IllegalArgumentException("No se recibieron datos ni archivo CSV");
+    }
+
+    private List<Double> parseDataString(String dataString) {
+        // Eliminar espacios en blanco y quitar corchetes inicial y final
+        dataString = dataString.trim();
+        if (dataString.startsWith("[") && dataString.endsWith("]")) {
+            dataString = dataString.substring(1, dataString.length() - 1);
+        }
+
+        // Si la cadena queda vacía, retornar una lista vacía
+        if (dataString.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // Dividir la cadena por comas y mapear cada elemento a Double
+        try {
+            return Arrays.stream(dataString.split(","))
+                    .map(String::trim)
+                    .map(Double::parseDouble)
+                    .collect(Collectors.toList());
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Formato inválido en los datos: " + dataString, e);
+        }
     }
 
 

@@ -12,7 +12,7 @@ import java.util.List;
 public class MuestraDTO {
     private long id;
     private String nombre;
-    private List<Double> datos;
+    private String datos;
     private MultipartFile file;
 
 }
