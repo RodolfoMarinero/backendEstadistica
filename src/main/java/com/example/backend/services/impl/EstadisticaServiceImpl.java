@@ -17,6 +17,8 @@ import java.util.stream.IntStream;
 public class EstadisticaServiceImpl implements EstadisticaService {
 
 
+
+
     @Override
     public EstadisticasDTO calcularEstadisticas(MuestraDTO muestra) {
         List<Double> data = obtenerDatos(muestra.getDatos(), muestra.getFile());

@@ -15,7 +15,9 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @RestController
 @RequestMapping("/api/estadisticas")
@@ -30,6 +32,16 @@ public class EstadisticaController {
     public void initBinder(WebDataBinder binder) {
         // Registrar el editor personalizado para MultipartFile
         binder.registerCustomEditor(MultipartFile.class, new MultipartFileEditor());
+    }
+
+
+    @GetMapping("/ejemplo")
+    public List<Double> getNumerosAleatorios() {
+        Random random = new Random();
+        return IntStream.range(0, 5) // Genera 5 números
+                .mapToObj(i -> 1 + random.nextInt(99)) // Números aleatorios entre 1 y 99
+                .map(Double::valueOf) // Convertir a Double
+                .collect(Collectors.toList()); // Convertir a lista
     }
 
     @GetMapping("/permutacion")
