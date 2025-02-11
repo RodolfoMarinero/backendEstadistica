@@ -104,24 +104,15 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
     @Override
     public List<Double> calcularModa(List<Double> data) {
-        // Crear el mapa de frecuencias de cada elemento
         Map<Double, Long> frequency = data.stream()
                 .collect(Collectors.groupingBy(e -> e, Collectors.counting()));
-
-        // Si no hay datos o el mapa está vacío, retornamos [-1]
         if (frequency.isEmpty()) {
             return List.of(-1.0);
         }
-
-        // Si todos los elementos tienen la misma frecuencia, no hay una moda definida
         if (frequency.values().stream().distinct().count() == 1) {
             return List.of(-1.0);
         }
-
-        // Si existen modas, buscamos el máximo de ocurrencias
         long maxCount = Collections.max(frequency.values());
-
-        // Retornamos aquellos elementos cuya frecuencia es igual al máximo
         return frequency.entrySet().stream()
                 .filter(entry -> entry.getValue() == maxCount)
                 .map(Map.Entry::getKey)
@@ -189,6 +180,19 @@ public class EstadisticaServiceImpl implements EstadisticaService {
 
     @Override
     public double calcularCoeficienteCorrelacion(List<Double> data1, List<Double> data2) {
-        return calcularCorrelacion(data1, data2)/calcularCovarianza(data1, data2);
+        if (data1 == null || data2 == null || data1.size() != data2.size() || data1.isEmpty()) {
+            throw new IllegalArgumentException("Las listas deben tener el mismo tamaño y no pueden estar vacías.");
+        }
+
+        double covarianza = calcularCovarianza(data1, data2);
+        double desviacionEstandarData1 = calcularDesviacionEstandar(data1);
+        double desviacionEstandarData2 = calcularDesviacionEstandar(data2);
+
+        if (desviacionEstandarData1 == 0 || desviacionEstandarData2 == 0) {
+            throw new ArithmeticException("No se puede calcular el coeficiente de correlación con una desviación estándar de 0.");
+        }
+
+        return covarianza / (desviacionEstandarData1 * desviacionEstandarData2);
     }
+
 }
